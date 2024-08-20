@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>Türkiye Gastronomi Haritası: 81 İlde Nerde Ne Yenir?</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" />
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #map {
+            border: 5px solid orange;
+            border-radius: 10px;
+            margin: 20px auto;
+            width: 90%;
+            height: 450px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #icons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #icons img {
+            margin-right: 20px;
+            vertical-align: middle;
+        }
+        #icons span {
+            font-size: 1.1em;
+            margin-right: 20px;
+        }
+        .language-select-container {
+            text-align: right;
+            margin: 5px 10px;
+        }
+        select {
+            padding: 5px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        h2 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+</head>
+<body>
+   
+    <div class="language-select-container">
+        <select id="languageSelect">
+            <option value="en">English</option>
+            <option value="tr">Türkçe</option>
+        </select>
+    </div>
+    <h2 id="pageTitle"></h2>
+
+    <!-- İşaretçi simgeleri ve açıklamaları -->
+    <div id="icons">
+        <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png" alt="Çorba İşareti" width="25" height="41">
+        <span id="soupText"></span>
+
+        <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png" alt="Tatlı İşareti" width="25" height="41">
+        <span id="dessertText"></span>
+
+        <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png" alt="Yemek İşareti" width="25" height="41">
+        <span id="mealText"></span>
+    </div>
+
+    <!-- Harita -->
+    <div id="map"></div>
+
+    <script>
+        // Harita oluştur
+        var map = L.map('map').setView([39.9334, 32.8597], 6);
+
+        // OpenStreetMap katmanını ekle
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // İllerin bilgilerini içeren dizi
+        var iller = [
+           
+ // Akdeniz illerine 3'er işaretçi ekleyelim
+        // Adana
+        { konum: [37.1000, 35.3213], ad: 'Adana', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Adana Çorbası', corba: 'Adana Çorbası' } },
+        { konum: [37.2000, 35.4213], ad: 'Adana', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Bici Bici', tatli: 'Adana Tatlısı' } },
+        { konum: [37.3000, 35.5213], ad: 'Adana', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Adana Kebap', corba: 'Adana Çorbası' } },
+
+        // Antalya
+        { konum: [36.7969, 30.7133], ad: 'Antalya', turizmBilgisi: { tr: 'Çorba - Yörük Çorbası', en: 'Soup - Yörük Çorbası' }, yemekResmi: 'images/antalya_corbasi.jpg', renk: 'blue', tarif: { yemek: '1 su bardağı buğday </br> 1 su bardağı yoğurt </br> 2 yemek kaşığı un </br> 1 yemek kaşığı tereyağı </br> 1 çay kaşığı nane </br> Tuz, su </br> </br> <b> Kültürel Hikayesi:</b> </br> Yörük Çorbası, Antalya\'nın dağlık bölgelerinde yaşayan Yörükler tarafından, göçebe hayatın zorluklarına karşı besleyici ve ısıtıcı bir yemek olarak ortaya çıkmıştır.', corba: 'Antalya Çorbası' } },
+        { konum: [36.8969, 30.8133], ad: 'Antalya', turizmBilgisi: { tr: 'Tatlı - Yanık Dondurma', en: 'Dessert - Yanık Dondurma' }, yemekResmi: 'images/antalya_tatlisi.jpg', renk: 'orange', tarif: { yemek: '1 litre keçi sütü </br> 1 su bardağı şeker </br> 1 yemek kaşığı salep </br> </br> <b> Kültürel Hikayesi: </b>Yanık Dondurma, Antalya\'nın Akseki ilçesine özgü, keçi sütünden yapılan ve hafif yanık tadıyla bilinen bir tatlıdır. Antalya\'nın sıcak yaz günlerinde serinletici bir lezzet olarak tüketilir.</b> </br>', tatli: 'Antalya Tatlısı' } },
+        { konum: [36.9969, 30.9133], ad: 'Antalya', turizmBilgisi: { tr: 'Yemek - Hibeş', en: 'Meal - Hibeş' }, yemekResmi: 'images/antalya_yemegi.jpg', renk: 'green', tarif: { yemek: '1 su bardağı tahin </br> 1 adet limonun suyu </br> 2 diş sarımsak </br> 1 çay kaşığı kimyon </br> 1 çay kaşığı pul biber </br> Tuz </br> </br> <b> Kültürel Hikayesi:</b> </br> Hibeş, Antalya\'nın Akdeniz mutfağından izler taşıyan bir mezedir. Tahin, limon suyu ve sarımsak gibi malzemelerle yapılan bu lezzet, Antalya\'nın zengin mutfak kültürünün bir parçasıdır.', corba: 'Antalya Çorbası' } },
+
+        // Hatay
+        { konum: [36.4018, 36.3498], ad: 'Hatay', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Oruk Çorbası', corba: 'Hatay Çorbası' } },
+        { konum: [36.5018, 36.4498], ad: 'Hatay', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Künefe', tatli: 'Hatay Tatlısı' } },
+        { konum: [36.6018, 36.5498], ad: 'Hatay', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Hatay Kebap', corba: 'Hatay Çorbası' } },
+
+        // Isparta
+        { konum: [37.7648, 30.5566], ad: 'Isparta', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Eğirdir Çorbası', corba: 'Isparta Çorbası' } },
+        { konum: [37.8648, 30.6566], ad: 'Isparta', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Güllü Tatlı', tatli: 'Isparta Tatlısı' } },
+        { konum: [37.9648, 30.7566], ad: 'Isparta', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Isparta Köftesi', corba: 'Isparta Çorbası' } },
+
+        // Mersin
+        { konum: [36.6000, 34.6333], ad: 'Mersin', turizmBilgisi: { tr: 'Çorba - Batırık', en: 'Soup - Batırık' }, yemekResmi: 'images/mersin_corbasi.jpg', renk: 'blue', tarif: { yemek: '1 su bardağı ince bulgur </br> 1 yemek kaşığı salça </br> 1 adet domates (rendelenmiş) </br> 1 adet salatalık (küp doğranmış) </br> 1 adet soğan (ince doğranmış) </br> 1 demet maydanoz (ince doğranmış) </br> 1/2 su bardağı yer fıstığı (dövülmüş) veya ceviz içi </br> Tuz, limon suyu, su </br> </br> <b> Kültürel Hikayesi:</b> </br> Batırık, sıcak yaz günlerinde çiftçiler tarafından serinletici bir öğün olarak ortaya çıkmıştır. Tarlada kolayca bulunan malzemelerle yapılan bu çorba, Mersin sofralarında sıkça yer alır. ', corba: 'Batırık - Mersin Çorbası' } },
+        { konum: [36.7000, 34.7333], ad: 'Mersin', turizmBilgisi: { tr: 'Tatlı - Kerebiç', en: 'Dessert - Kerebiç' }, yemekResmi: 'images/mersin_kerebic.jpg', renk: 'orange', tarif: { yemek: '1 su bardağı irmik  </br> 1 su bardağı un </br> 1/2 su bardağı tereyağı </br> 1/2 su bardağı pudra şekeri </br> 1/2 su bardağı süt </br>1 paket vanilya </br>1 çay kaşığı kabartma tozu </br> İç harcı için: Antep fıstığı veya ceviz içi </br> </br> <b> Kültürel Hikayesi:</b> </br> Kerebiç, Arap kökenli bir tatlı olup, Mersin’e göç eden Arap toplulukları tarafından getirilmiştir. Özellikle Ramazan ayında yapılan bu tatlı, iftar sofralarının vazgeçilmezidir.', tatli: 'Kerebiç - Mersin Tatlısı' } },
+        { konum: [36.8000, 34.8333], ad: 'Mersin', turizmBilgisi: { tr: 'Yemek - Tantuni', en: 'Meal - Tantuni' }, yemekResmi: 'images/mersin_tantuni.jpg', renk: 'green', tarif: { yemek: '300 gram dana eti (ince kıyılmış) </br> 1 adet soğan </br> 2 adet domates </br> 1 adet yeşil biber </br> 1 çay kaşığı kimyon </br> 1 çay kaşığı pul biber </br> Lavaş ekmeği </br> Tuz </br> Zeytinyağı </br> </br> <b> Kültürel Hikayesi:</b> </br> Tantuni, Mersin limanında çalışan işçiler tarafından hızlı ve doyurucu bir öğün olarak ortaya çıkmıştır. Pratik yapılışı ve lezzeti sayesinde zamanla Mersin mutfağının sembolü haline gelmiştir.', corba: 'Mersin Çorbası' } },
+        
+        // Osmaniye
+        { konum: [37.0740, 36.2471], ad: 'Osmaniye', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Topalak Çorbası', corba: 'Osmaniye Çorbası' } },
+        { konum: [37.1740, 36.3471], ad: 'Osmaniye', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Cevizli Tatlı', tatli: 'Osmaniye Tatlısı' } },
+        { konum: [37.2740, 36.4471], ad: 'Osmaniye', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Osmaniye Kebabı', corba: 'Osmaniye Çorbası' } },
+
+	// İç Anadolu illerine 3'er işaretçi ekleyelim
+        // Konya
+        { konum: [37.7667, 32.4833], ad: 'Konya', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Bamya Çorbası', corba: 'Konya Çorbası' } },
+        { konum: [37.8667, 32.5833], ad: 'Konya', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Sac Arası', tatli: 'Konya Tatlısı' } },
+        { konum: [37.9667, 32.6833], ad: 'Konya', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Etli Ekmek', corba: 'Konya Çorbası' } },
+
+        // Eskişehir
+        { konum: [39.7667, 30.5256], ad: 'Eskişehir', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Haşhaş Çorbası', corba: 'Eskişehir Çorbası' } },
+        { konum: [39.8667, 30.6256], ad: 'Eskişehir', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Met Helvası', tatli: 'Eskişehir Tatlısı' } },
+        { konum: [39.9667, 30.7256], ad: 'Eskişehir', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Çiğbörek', corba: 'Eskişehir Çorbası' } },
+
+        // Kayseri
+        { konum: [38.7333, 35.4833], ad: 'Kayseri', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Develi Cıvıklısı', corba: 'Kayseri Çorbası' } },
+        { konum: [38.8333, 35.5833], ad: 'Kayseri', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Nevzine', tatli: 'Kayseri Tatlısı' } },
+        { konum: [38.9333, 35.6833], ad: 'Kayseri', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Mantı', corba: 'Kayseri Çorbası' } },
+
+        // Sivas
+        { konum: [39.7477, 37.0179], ad: 'Sivas', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Madımak Çorbası', corba: 'Sivas Çorbası' } },
+        { konum: [39.8477, 37.1179], ad: 'Sivas', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Hurma Tatlısı', tatli: 'Sivas Tatlısı' } },
+        { konum: [39.9477, 37.2179], ad: 'Sivas', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Sivas Köftesi', corba: 'Sivas Çorbası' } },
+
+        // Kırıkkale
+        { konum: [39.7450, 33.5064], ad: 'Kırıkkale', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Un Çorbası', corba: 'Kırıkkale Çorbası' } },
+        { konum: [39.8450, 33.6064], ad: 'Kırıkkale', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Pelverde Tatlısı', tatli: 'Kırıkkale Tatlısı' } },
+        { konum: [39.9450, 33.7064], ad: 'Kırıkkale', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Kırıkkale Köftesi', corba: 'Kırıkkale Çorbası' } },
+
+        // Kırşehir
+        { konum: [39.1458, 34.1639], ad: 'Kırşehir', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Yoğurt Çorbası', corba: 'Kırşehir Çorbası' } },
+        { konum: [39.2458, 34.2639], ad: 'Kırşehir', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Sütlü Tatlı', tatli: 'Kırşehir Tatlısı' } },
+        { konum: [39.3458, 34.3639], ad: 'Kırşehir', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Etli Ekmek', corba: 'Kırşehir Çorbası' } },
+
+        // Niğde
+        { konum: [37.7667, 34.6833], ad: 'Niğde', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Tarhana Çorbası', corba: 'Niğde Çorbası' } },
+        { konum: [37.8667, 34.7833], ad: 'Niğde', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Niğde Gazozu Tatlısı', tatli: 'Niğde Tatlısı' } },
+        { konum: [37.9667, 34.8833], ad: 'Niğde', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Tandır', corba: 'Niğde Çorbası' } },
+
+        // Aksaray
+        { konum: [38.3686, 34.0360], ad: 'Aksaray', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Düğün Çorbası', corba: 'Aksaray Çorbası' } },
+        { konum: [38.4686, 34.1360], ad: 'Aksaray', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Dolaz Tatlısı', tatli: 'Aksaray Tatlısı' } },
+        { konum: [38.5686, 34.2360], ad: 'Aksaray', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Ispanaklı Börek', corba: 'Aksaray Çorbası' } },
+
+	// Karaman
+        { konum: [37.1810, 33.2150], ad: 'Karaman', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Bulgur Çorbası', corba: 'Karaman Çorbası' } },
+        { konum: [37.2810, 33.3150], ad: 'Karaman', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Karaman Tatlısı', tatli: 'Karaman Tatlısı' } },
+        { konum: [37.3810, 33.4150], ad: 'Karaman', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Karaman Tava', corba: 'Karaman Çorbası' } },
+
+        // Burdur
+        { konum: [37.7204, 30.2903], ad: 'Burdur', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Burdur Çorbası', corba: 'Burdur Çorbası' } },
+        { konum: [37.8204, 30.3903], ad: 'Burdur', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Burdur Muhallebisi', tatli: 'Ceviz Ezmesi' } },
+        { konum: [37.9204, 30.4903], ad: 'Burdur', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Burdur Şiş', corba: 'Burdur Çorbası' } },
+
+        // Muğla
+        { konum: [37.2153, 28.3636], ad: 'Muğla', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Balık Çorbası', corba: 'Muğla Çorbası' } },
+        { konum: [37.3153, 28.4636], ad: 'Muğla', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Muğla Gazozu Tatlısı', tatli: 'Muğla Tatlısı' } },
+        { konum: [37.4153, 28.5636], ad: 'Muğla', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Muğla Kavurması', corba: 'Muğla Çorbası' } },
+
+        // Gaziantep
+        { konum: [37.0662, 37.3833], ad: 'Gaziantep', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Beyran Çorbası', corba: 'Antep Çorbası' } },
+        { konum: [37.1662, 37.4833], ad: 'Gaziantep', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Baklava', tatli: 'Antep Tatlısı' } },
+        { konum: [37.2662, 37.5833], ad: 'Gaziantep', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Küşleme', corba: 'Antep Çorbası' } },
+
+        // Şanlıurfa
+        { konum: [37.1674, 38.7939], ad: 'Şanlıurfa', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Lebeniye Çorbası', corba: 'Urfa Çorbası' } },
+        { konum: [37.2674, 38.8939], ad: 'Şanlıurfa', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Künefe', tatli: 'Urfa Tatlısı' } },
+        { konum: [37.3674, 38.9939], ad: 'Şanlıurfa', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Urfa Kebabı', corba: 'Urfa Çorbası' } },
+
+        // Adıyaman
+        { konum: [37.7648, 38.2764], ad: 'Adıyaman', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Peynir Çorbası', corba: 'Adıyaman Çorbası' } },
+        { konum: [37.8648, 38.3764], ad: 'Adıyaman', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Basalla Tatlısı', tatli: 'Adıyaman Tatlısı' } },
+        { konum: [37.9648, 38.4764], ad: 'Adıyaman', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Adıyaman Kebabı', corba: 'Adıyaman Çorbası' } },
+
+        // Malatya
+        { konum: [38.3554, 38.3095], ad: 'Malatya', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Analı Kızlı', corba: 'Malatya Çorbası' } },
+        { konum: [38.4554, 38.4095], ad: 'Malatya', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Kağıt Kebabı', tatli: 'Malatya Tatlısı' } },
+        { konum: [38.5554, 38.5095], ad: 'Malatya', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Kağıt Kebabı', corba: 'Malatya Çorbası' } },
+
+	//dogu
+// Erzurum
+{ konum: [39.7042, 41.2679], ad: 'Erzurum', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/ecorba.jpg', renk: 'blue', tarif: { yemek: 'Ayran Aşı Çorbası', corba: 'Erzurum Çorbası' } },
+{ konum: [39.8042, 41.3679], ad: 'Erzurum', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Kadayıf Dolması', tatli: 'Erzurum Tatlısı' } },
+{ konum: [39.9042, 41.4679], ad: 'Erzurum', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Cağ Kebabı', corba: 'Erzurum Çorbası' } },
+
+// Ağrı
+{ konum: [39.7191, 43.0503], ad: 'Ağrı', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Helise Çorbası', corba: 'Ağrı Çorbası' } },
+{ konum: [39.8191, 43.1503], ad: 'Ağrı', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Hasuda', tatli: 'Ağrı Tatlısı' } },
+{ konum: [39.9191, 43.2503], ad: 'Ağrı', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Abdigör Köftesi', corba: 'Ağrı Çorbası' } },
+
+// Muş
+{ konum: [38.7462, 41.7539], ad: 'Muş', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Herle Çorbası', corba: 'Muş Çorbası' } },
+{ konum: [38.8462, 41.8539], ad: 'Muş', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Muş Helvası', tatli: 'Muş Tatlısı' } },
+{ konum: [38.9462, 41.9539], ad: 'Muş', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Muş Lahana Dolması', corba: 'Muş Çorbası' } },
+
+// Bitlis
+{ konum: [38.3938, 42.1232], ad: 'Bitlis', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Ayran Çorbası', corba: 'Bitlis Çorbası' } },
+{ konum: [38.4938, 42.2232], ad: 'Bitlis', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Bitlis Halvası', tatli: 'Bitlis Tatlısı' } },
+{ konum: [38.5938, 42.3232], ad: 'Bitlis', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Bitlis Büryanı', corba: 'Bitlis Çorbası' } },
+
+// Bingöl
+{ konum: [39.0626, 40.7696], ad: 'Bingöl', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Sorina Pel Çorbası', corba: 'Bingöl Çorbası' } },
+{ konum: [39.1626, 40.8696], ad: 'Bingöl', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Mastuva', tatli: 'Bingöl Tatlısı' } },
+{ konum: [39.2626, 40.9696], ad: 'Bingöl', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Kürt Köftesi', corba: 'Bingöl Çorbası' } },
+
+// Diyarbakır
+{ konum: [37.7247, 40.2100], ad: 'Diyarbakır', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Lebeni Çorbası', corba: 'Diyarbakır Çorbası' } },
+{ konum: [37.8247, 40.3100], ad: 'Diyarbakır', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Diyarbakır Burma Kadayıfı', tatli: 'Diyarbakır Tatlısı' } },
+{ konum: [37.9247, 40.4100], ad: 'Diyarbakır', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Diyarbakır Karpuz Kebabı', corba: 'Diyarbakır Çorbası' } },
+
+// Mardin
+{ konum: [37.3122, 40.7351], ad: 'Mardin', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Harire Çorbası', corba: 'Mardin Çorbası' } },
+{ konum: [37.4122, 40.8351], ad: 'Mardin', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Mırra', tatli: 'Mardin Tatlısı' } },
+{ konum: [37.5122, 40.9351], ad: 'Mardin', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'İrok', corba: 'Mardin Çorbası' } },
+
+// Erzincan
+{ konum: [39.7500, 39.5000], ad: 'Erzincan', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Kesme Çorbası', corba: 'Erzincan Çorbası' } },
+{ konum: [39.8500, 39.6000], ad: 'Erzincan', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Lohusa Şerbeti', tatli: 'Erzincan Tatlısı' } },
+{ konum: [39.9500, 39.7000], ad: 'Erzincan', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Erzincan Tandırı', corba: 'Erzincan Çorbası' } },
+
+// Gümüşhane
+{ konum: [40.4602, 39.4715], ad: 'Gümüşhane', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Kavut Çorbası', corba: 'Gümüşhane Çorbası' } },
+{ konum: [40.5602, 39.5715], ad: 'Gümüşhane', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Pestil Tatlısı', tatli: 'Gümüşhane Tatlısı' } },
+{ konum: [40.6602, 39.6715], ad: 'Gümüşhane', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Fırın Kuşbaşı', corba: 'Gümüşhane Çorbası' } },
+
+// Trabzon
+{ konum: [41.0015, 39.7178], ad: 'Trabzon', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Hamsiköy Sütlacı', corba: 'Trabzon Çorbası' } },
+{ konum: [41.1015, 39.8178], ad: 'Trabzon', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Hamsiköy Sütlacı', tatli: 'Trabzon Tatlısı' } },
+{ konum: [41.2015, 39.9178], ad: 'Trabzon', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Akçaabat Köftesi', corba: 'Trabzon Çorbası' } },
+
+// Rize
+{ konum: [41.0201, 40.5234], ad: 'Rize', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Mısır Çorbası', corba: 'Rize Çorbası' } },
+{ konum: [41.1201, 40.6234], ad: 'Rize', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Laz Böreği', tatli: 'Rize Tatlısı' } },
+{ konum: [41.2201, 40.7234], ad: 'Rize', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Hamsili Pilav', corba: 'Rize Çorbası' } },
+
+// Artvin
+{ konum: [41.1833, 41.7333], ad: 'Artvin', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Dible Çorbası', corba: 'Artvin Çorbası' } },
+{ konum: [41.2833, 41.8333], ad: 'Artvin', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Laz Böreği', tatli: 'Artvin Tatlısı' } },
+{ konum: [41.3833, 41.9333], ad: 'Artvin', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Karalahana Sarması', corba: 'Artvin Çorbası' } },
+
+// Giresun
+{ konum: [40.7128, 38.3895], ad: 'Giresun', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Karalahana Çorbası', corba: 'Giresun Çorbası' } },
+{ konum: [40.8128, 38.4895], ad: 'Giresun', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Fındıklı Burma', tatli: 'Giresun Tatlısı' } },
+{ konum: [40.9128, 38.5895], ad: 'Giresun', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Isırgan Otu Kavurması', corba: 'Giresun Çorbası' } },
+
+// Ardahan
+{ konum: [41.1105, 42.7022], ad: 'Ardahan', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Evelik Çorbası', corba: 'Ardahan Çorbası' } },
+{ konum: [41.2105, 42.8022], ad: 'Ardahan', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Pişi Tatlısı', tatli: 'Ardahan Tatlısı' } },
+{ konum: [41.3105, 42.9022], ad: 'Ardahan', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Katmer', corba: 'Ardahan Çorbası' } },
+
+// Kars
+{ konum: [40.6050, 43.0975], ad: 'Kars', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Erişte Aşı Çorbası', corba: 'Kars Çorbası' } },
+{ konum: [40.7050, 43.1975], ad: 'Kars', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Hasuda', tatli: 'Kars Tatlısı' } },
+{ konum: [40.8050, 43.2975], ad: 'Kars', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Kars Kazı', corba: 'Kars Çorbası' } },
+
+// Van
+{ konum: [38.4942, 43.3801], ad: 'Van', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Aşotu Çorbası', corba: 'Van Çorbası' } },
+{ konum: [38.5942, 43.4801], ad: 'Van', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Kavut Tatlısı', tatli: 'Van Tatlısı' } },
+{ konum: [38.66942, 43.5801], ad: 'Van', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Van Balığı', corba: 'Van Çorbası' } },
+
+// Tokat
+{ konum: [40.3167, 36.5541], ad: 'Tokat', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Tokat Kebabı', corba: 'Tokat Çorbası' } },
+{ konum: [40.4167, 36.6541], ad: 'Tokat', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Bat', tatli: 'Tokat Tatlısı' } },
+{ konum: [40.5167, 36.7541], ad: 'Tokat', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Tokat Çemeni', corba: 'Tokat Çorbası' } },
+
+// Amasya
+{ konum: [40.6533, 35.7331], ad: 'Amasya', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Keşkek', corba: 'Amasya Çorbası' } },
+{ konum: [40.7533, 35.8331], ad: 'Amasya', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Amasya Baklavası', tatli: 'Amasya Tatlısı' } },
+{ konum: [40.8533, 35.9331], ad: 'Amasya', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Amasya Etli Dolma', corba: 'Amasya Çorbası' } },
+
+// Çorum
+{ konum: [40.5506, 34.7556], ad: 'Çorum', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Çatal Aşı Çorbası', corba: 'Çorum Çorbası' } },
+{ konum: [40.6506, 34.8556], ad: 'Çorum', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Çorum Leblebisi', tatli: 'Çorum Tatlısı' } },
+{ konum: [40.7506, 34.9556], ad: 'Çorum', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Çorum Kebabı', corba: 'Çorum Çorbası' } },
+
+// Samsun
+{ konum: [41.2867, 36.33], ad: 'Samsun', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Samsun Pidesi', corba: 'Samsun Çorbası' } },
+{ konum: [41.3867, 36.43], ad: 'Samsun', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Nokul', tatli: 'Samsun Tatlısı' } },
+{ konum: [41.4867, 36.53], ad: 'Samsun', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Bafra Kıymalı', corba: 'Samsun Çorbası' } },
+
+// Sinop
+{ konum: [42.0231, 35.1531], ad: 'Sinop', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Mısır Çorbası', corba: 'Sinop Çorbası' } },
+{ konum: [42.1231, 35.2531], ad: 'Sinop', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'İncir Uyutması', tatli: 'Sinop Tatlısı' } },
+{ konum: [42.2231, 35.3531], ad: 'Sinop', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Sinop Mantısı', corba: 'Sinop Çorbası' } },
+
+// Kastamonu
+{ konum: [41.3899, 33.7827], ad: 'Kastamonu', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Ekşili Pilav', corba: 'Kastamonu Çorbası' } },
+{ konum: [41.4899, 33.8827], ad: 'Kastamonu', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Cevizli Sucuk', tatli: 'Kastamonu Tatlısı' } },
+{ konum: [41.5899, 33.9827], ad: 'Kastamonu', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Kuyu Kebabı', corba: 'Kastamonu Çorbası' } },
+
+// Çankırı
+{ konum: [40.6009, 33.6169], ad: 'Çankırı', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Paça Çorbası', corba: 'Çankırı Çorbası' } },
+{ konum: [40.7009, 33.7169], ad: 'Çankırı', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Yumurta Tatlısı', tatli: 'Çankırı Tatlısı' } },
+{ konum: [40.8009, 33.8169], ad: 'Çankırı', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Çankırı Etli Ekmek', corba: 'Çankırı Çorbası' } },
+
+// Bartın
+{ konum: [41.5811, 32.4612], ad: 'Bartın', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Umac Çorbası', corba: 'Bartın Çorbası' } },
+{ konum: [41.6811, 32.5612], ad: 'Bartın', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Bartın Lokumu', tatli: 'Bartın Tatlısı' } },
+{ konum: [41.7811, 32.6612], ad: 'Bartın', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Bartın Kuru Fasulyesi', corba: 'Bartın Çorbası' } },
+
+// Zonguldak
+{ konum: [41.4564, 31.7987], ad: 'Zonguldak', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Mısır Çorbası', corba: 'Zonguldak Çorbası' } },
+{ konum: [41.5564, 31.8987], ad: 'Zonguldak', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Zonguldak Lokumu', tatli: 'Zonguldak Tatlısı' } },
+{ konum: [41.6564, 31.9987], ad: 'Zonguldak', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Mancar Sarması', corba: 'Zonguldak Çorbası' } },
+
+// Kocaeli
+{ konum: [40.7533, 29.7815], ad: 'Kocaeli', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Paça Çorbası', corba: 'Kocaeli Çorbası' } },
+{ konum: [40.8533, 29.8815], ad: 'Kocaeli', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Pişmaniye', tatli: 'Kocaeli Tatlısı' } },
+{ konum: [40.9533, 29.9815], ad: 'Kocaeli', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Kocaeli Kebap', corba: 'Kocaeli Çorbası' } },
+
+// İstanbul
+{ konum: [41.0082, 28.7784], ad: 'İstanbul', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'İşkembe Çorbası', corba: 'İstanbul Çorbası' } },
+{ konum: [41.1082, 28.8784], ad: 'İstanbul', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Baklava', tatli: 'İstanbul Tatlısı' } },
+{ konum: [41.2082, 28.9784], ad: 'İstanbul', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Saray Köftesi', corba: 'İstanbul Çorbası' } },
+
+// Edirne
+{ konum: [41.6772, 26.5554], ad: 'Edirne', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Kuzu Kapama Çorbası', corba: 'Edirne Çorbası' } },
+{ konum: [41.7772, 26.6554], ad: 'Edirne', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Edirne Ciğeri', tatli: 'Edirne Tatlısı' } },
+{ konum: [41.8772, 26.7554], ad: 'Edirne', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Edirne Tava Ciğeri', corba: 'Edirne Çorbası' } },
+
+// Tekirdağ
+{ konum: [40.7780, 27.5119], ad: 'Tekirdağ', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Çeneçarpan Çorbası', corba: 'Tekirdağ Çorbası' } },
+{ konum: [40.8780, 27.6119], ad: 'Tekirdağ', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Hayrabolu Tatlısı', tatli: 'Tekirdağ Tatlısı' } },
+{ konum: [40.9780, 27.7119], ad: 'Tekirdağ', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Tekirdağ Köftesi', corba: 'Tekirdağ Çorbası' } },
+
+// Çanakkale
+{ konum: [40.1553, 26.4142], ad: 'Çanakkale', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Troy Çorbası', corba: 'Çanakkale Çorbası' } },
+{ konum: [40.2553, 26.5142], ad: 'Çanakkale', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Peynir Helvası', tatli: 'Çanakkale Tatlısı' } },
+{ konum: [40.3553, 26.6142], ad: 'Çanakkale', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'İskorpit Çorbası', corba: 'Çanakkale Çorbası' } },
+
+// Balıkesir
+{ konum: [39.6484, 27.7826], ad: 'Balıkesir', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Balıkesir Keşkek', corba: 'Balıkesir Çorbası' } },
+{ konum: [39.7484, 27.8826], ad: 'Balıkesir', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Höşmerim', tatli: 'Balıkesir Tatlısı' } },
+{ konum: [39.8484, 27.9826], ad: 'Balıkesir', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Tirit', corba: 'Balıkesir Çorbası' } },
+
+// İzmir
+{ konum: [38.4192, 27.1287], ad: 'İzmir', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'İzmir Köfte', corba: 'İzmir Çorbası' } },
+{ konum: [38.5192, 27.2287], ad: 'İzmir', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'İzmir Lokması', tatli: 'İzmir Tatlısı' } },
+{ konum: [38.6192, 27.3287], ad: 'İzmir', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Boyoz', corba: 'İzmir Çorbası' } },
+
+// Aydın
+{ konum: [37.7489, 27.7450], ad: 'Aydın', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Çine Çorbası', corba: 'Aydın Çorbası' } },
+{ konum: [37.8489, 27.8450], ad: 'Aydın', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg.jpg', renk: 'orange', tarif: { yemek: 'İncir Tatlısı', tatli: 'Aydın Tatlısı' } },
+{ konum: [37.9489, 27.9450], ad: 'Aydın', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Çingene Pilavı', corba: 'Aydın Çorbası' } },
+
+// Manisa
+{ konum: [38.6191, 27.4289], ad: 'Manisa', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Simav Çorbası', corba: 'Manisa Çorbası' } },
+{ konum: [38.7191, 27.5289], ad: 'Manisa', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Manisa Mesir Macunu', tatli: 'Manisa Tatlısı' } },
+{ konum: [38.8191, 27.6289], ad: 'Manisa', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Manisa Kebabı', corba: 'Manisa Çorbası' } },
+
+// Afyon
+{ konum: [38.7639, 30.5400], ad: 'Afyon', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Afyon Keşkeği', corba: 'Afyon Çorbası' } },
+{ konum: [38.8639, 30.6400], ad: 'Afyon', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Kaymaklı Ekmek Kadayıfı', tatli: 'Afyon Tatlısı' } },
+{ konum: [38.9639, 30.7400], ad: 'Afyon', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Afyon Sucuğu', corba: 'Afyon Çorbası' } },
+
+// Uşak
+{ konum: [38.6800, 29.4082], ad: 'Uşak', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Tarhana Çorbası', corba: 'Uşak Çorbası' } },
+{ konum: [38.7800, 29.5082], ad: 'Uşak', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Katmer', tatli: 'Uşak Tatlısı' } },
+{ konum: [38.8800, 29.6082], ad: 'Uşak', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Cirit Kebabı', corba: 'Uşak Çorbası' } },
+
+// Eskişehir
+{ konum: [39.7667, 30.5256], ad: 'Eskişehir', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Haşhaş Çorbası', corba: 'Eskişehir Çorbası' } },
+{ konum: [39.8667, 30.6256], ad: 'Eskişehir', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Met Helvası', tatli: 'Eskişehir Tatlısı' } },
+{ konum: [39.9667, 30.7256], ad: 'Eskişehir', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Çiğbörek', corba: 'Eskişehir Çorbası' } },
+
+// Kütahya
+{ konum: [39.4242, 29.7833], ad: 'Kütahya', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Sıkıcık Çorbası', corba: 'Kütahya Çorbası' } },
+{ konum: [39.5242, 29.8833], ad: 'Kütahya', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Kütahya Höşmerimi', tatli: 'Kütahya Tatlısı' } },
+{ konum: [39.6242, 29.9833], ad: 'Kütahya', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Kütahya Güveci', corba: 'Kütahya Çorbası' } },
+
+//Ankara
+{ konum: [39.7334, 32.7597], ad: 'Ankara', turizmBilgisi: { tr: 'Çorba', en: 'Soup' }, yemekResmi: 'images/corba.jpg', renk: 'blue', tarif: { yemek: 'Düğün Çorbası', corba: 'Ankara Çorbası' } },
+{ konum: [39.8334, 32.8597], ad: 'Ankara', turizmBilgisi: { tr: 'Tatlı', en: 'Dessert' }, yemekResmi: 'images/tatli.jpg', renk: 'orange', tarif: { yemek: 'Kızılcık Şerbeti', tatli: 'Ankara Tatlısı' } },
+{ konum: [39.9334, 32.9597], ad: 'Ankara', turizmBilgisi: { tr: 'Yemek', en: 'Meal' }, yemekResmi: 'images/yemek.jpg', renk: 'green', tarif: { yemek: 'Ankara Tava', corba: 'Ankara Çorbası' } }
+
+        ];
+
+        // Dil çevirileri
+        var language = {
+            tr: {
+                dessert: 'Tatlı',
+                dish: 'Yemek',
+                drink: 'İçecek',
+                pageTitle: 'Türkiye Gastronomi Haritası: 81 İlde Nerde Ne Yenir?',
+                soup: 'Çorba',
+                dessert: 'Tatlı',
+                meal: 'Yemek'
+            },
+            en: {
+                dessert: 'Dessert',
+                dish: 'Dish',
+                drink: 'Drink',
+                pageTitle: 'Turkey Gastronomy Map: Where to Eat in 81 Provinces?',
+                soup: 'Soup',
+                dessert: 'Dessert',
+                meal: 'Meal'
+            }
+        };
+
+        // Dil seçeneklerini güncelle
+        function updateTexts(lang) {
+            $('#pageTitle').text(language[lang].pageTitle);
+            $('#soupText').text(language[lang].soup);
+            $('#dessertText').text(language[lang].dessert);
+            $('#mealText').text(language[lang].meal);
+        }
+
+        // Başlangıç dilini ayarla
+        updateTexts('tr');
+
+        // Dil seçeneği değiştikçe güncelle
+        $('#languageSelect').on('change', function() {
+            var selectedLang = $(this).val();
+            updateTexts(selectedLang);
+        });
+
+        // İllerin marker'larını haritaya ekle
+        for (var i = 0; i < iller.length; i++) {
+            var il = iller[i];
+            var marker = L.marker(il.konum, {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-' + il.renk + '.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34]
+                })
+            }).addTo(map);
+
+            // Marker'ın üzerine tıklandığında popup oluştur
+            marker.bindPopup('<b>' + il.ad + '</b><br><span id="turismText">' + il.turizmBilgisi.tr + '</span>' +
+                '<br><a data-fancybox="gallery" href="' + il.yemekResmi + '"><img src="' + il.yemekResmi + '" alt="' + il.ad + ' Yemeği" width="100" height="100"></a>' +
+                '<br><strong>Yemek Tarifi:</strong> ' + il.tarif.yemek);
+
+            // Popup içindeki dil seçeneğini güncelle
+            marker.on('popupopen', function () {
+                var popup = this.getPopup();
+                var turismText = $(popup.getContent()).find('#turismText');
+                turismText.text(language[$('#languageSelect').val()].turism);
+            });
+        }
+
+        // Galeri görüntüleme özelliklerini tanımla
+        $('[data-fancybox="gallery"]').fancybox({
+            animationEffect: "zoom-in-out",
+            transitionEffect: "slide",
+            buttons: ["zoom", "slideShow", "fullScreen", "close"]
+        });
+    </script>
+
+</body>
+</html>
